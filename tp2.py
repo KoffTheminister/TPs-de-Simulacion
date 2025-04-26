@@ -33,18 +33,52 @@ def martingala(tirs):
             historialCapital.append(capital)
             tiradasPerdidas = 0
         n += 1
-    return capital, historialCapital, n
+    print(f"\El capital en la tirada numero {n} es de ${capital}")
+    return historialCapital
 
 
-tiradas = 200 
-capitalFinal, historial, n = martingala(tiradas)
-
-print(f"\nCapital final después de {tiradas} tiradas: ${capitalFinal} en {n} tiradas")
 
 
-plt.plot(historial)
-plt.title('Evolución del capital en la estrategia Martingala')
-plt.xlabel('Número de tiradas')
-plt.ylabel('Capital')
-plt.grid()
-plt.show()
+
+def dalembert(tirs):
+    tiradasPerdidas = 0
+    n = 0
+    capital = 10000
+    apuesta = 100
+    historialCapital = []
+    while n < tirs:
+        if capital < apuesta:
+            print("No hay suficiente capital para continuar.")
+            break
+        tirada = random.randint(0, 36)
+        if tirada not in negro:
+            capital -= apuesta
+            apuesta += 100  
+            historialCapital.append(capital)
+            tiradasPerdidas += 1
+        else:
+            capital += apuesta
+            if apuesta > 100:
+                apuesta -= 100  
+            historialCapital.append(capital)
+            tiradasPerdidas = 0
+        n += 1
+    print(f"\ El capital en la tirada numero {n} es de ${capital}")
+    return historialCapital
+
+
+# Ahora el gráfico:
+def graficar(historial, nombreEstrategia):
+    plt.plot(historial)
+    plt.title(f"Estrategia {nombreEstrategia}")
+    plt.xlabel("Número de tiradas")
+    plt.ylabel("Capital")
+    plt.grid(True)
+    plt.show()
+
+# Ejemplo de uso:
+historialCapitalMartingala = martingala(100)
+graficar(historialCapitalMartingala, "Martingala")
+
+historialCapitalDalembert = dalembert(100)
+graficar(historialCapitalDalembert, "D'Alembert")
