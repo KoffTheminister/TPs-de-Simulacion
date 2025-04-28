@@ -8,49 +8,73 @@ import matplotlib.pyplot as plt
 
 negro = [2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35]
 
-def martingala(tirs):
-    capital = 10000
-    historialCapital = [capital]
-    apuesta = 100
+def martingala(tirs, capital):
+    if(capital == 'i'):
+        cap = 0
+        apuesta_inicial = 100
+    else:
+        cap = capital
+        apuesta_inicial = cap * 0.01
+    historialCapital = [cap]
+    resultados = []
+    apuesta = apuesta_inicial    
     n = 0
+    cont = 0
     while n < tirs:
-        if capital < apuesta:
+        if cap < apuesta and capital != 'i':
             print("No hay suficiente capital para continuar.")
             break
         tirada = random.randint(0, 36)
         if(tirada not in negro):
-            capital -= apuesta
+            cap -= apuesta
             apuesta *= 2
-            historialCapital.append(capital)
+            historialCapital.append(cap)
+            #resultados.append(0)
         else:
-            capital += apuesta
-            apuesta = apuesta
-            historialCapital.append(capital)
+            cap += apuesta
+            apuesta = apuesta_inicial
+            historialCapital.append(cap)
+            #resultados.append(1)
+            cont += 1
+        resultados.append(cont/(n + 1))
         n += 1
-    print(f"\El capital en la tirada numero {n} es de ${capital}")
+    #print(f"\El capital en la tirada numero {n} es de ${cap}")
+
+    # plt.figure(figsize=(10, 6))
+    # plt.bar(range(len(resultados)), resultados, color='skyblue')
+    # plt.title('Proporción de éxitos en cada tirada')
+    # plt.xlabel('Número de tirada')
+    # plt.ylabel('Proporción de éxitos')
+    # plt.grid(True, linestyle='--', alpha=0.7)
+    # plt.show()
     return historialCapital
 
-def dalembert(tirs):
+def dalembert(tirs, capital):
+    if(capital == 'i'):
+        cap = 0
+        inv = 100
+    else:
+        cap = capital
+        inv = cap * 0.01
     n = 0
-    capital = 10000
-    apuesta = 100
-    historialCapital = [capital]
+    apuesta = inv
+    historialCapital = [cap]
     while n < tirs:
-        if capital < apuesta:
+        if cap < apuesta and capital != 'i':
             print("No hay suficiente capital para continuar.")
             break
         tirada = random.randint(0, 36)
         if tirada not in negro:
-            capital -= apuesta
-            apuesta += 100  
-            historialCapital.append(capital)
+            cap -= apuesta
+            apuesta += inv            
+            historialCapital.append(cap)
         else:
-            capital += apuesta
-            if apuesta > 100:
-                apuesta -= 100  
-            historialCapital.append(capital)
+            cap += apuesta
+            if apuesta > (inv):
+                apuesta -= inv
+            historialCapital.append(cap)
         n += 1
-    print(f"\ El capital en la tirada numero {n} es de ${capital}")
+    print(f"\ El capital en la tirada numero {n} es de ${cap}")
     return historialCapital
 
 def generador_fibonacci(n):
@@ -59,44 +83,186 @@ def generador_fibonacci(n):
         a, b = b, a + b
     return a
 
-def fibonacci_1(tirs):
-    capital = 10000
-    historialCapital = [capital]
+def fibonacci(tirs, capital):
+    if(capital == 'i'):
+        cap = 0
+        inv = 100
+    else:
+        cap = capital
+        inv = cap * 0.01
+    apuesta = inv
+    historialCapital = [cap]
     historialApuestas = []
     n = 0
     posicion_fibonacci = 0
-
     while n < tirs:
-        apuesta = generador_fibonacci(posicion_fibonacci) * 100
-        historialApuestas.append(apuesta)
-        if capital < apuesta:
+        if cap < apuesta and capital != 'i':
             print("No hay suficiente capital para continuar.")
             break   
-        resultado = random.randint(0, 36)
 
+        apuesta = generador_fibonacci(posicion_fibonacci) * 100
+        historialApuestas.append(apuesta)
+        resultado = random.randint(0, 36)
         if resultado in negro:
-            capital += apuesta
+            cap += apuesta
             posicion_fibonacci = max(posicion_fibonacci - 2, 0)  
         else:
-            capital -= apuesta
+            cap -= apuesta
             posicion_fibonacci += 1
 
-        historialCapital.append(capital)
+        historialCapital.append(cap)
         n += 1
-    print(f"\ El capital en la tirada numero {n} es de ${capital}")
+    print(f"\ El capital en la tirada numero {n} es de ${cap}")
     print(historialApuestas)
     return historialCapital
 
+def nuevaEstrategia(tirs, capital):
+    if(capital == 'i'):
+        cap = 0
+        inv = 100
+    else:
+        cap = capital
+        inv = cap * 0.01
+    apuesta = inv
+    historialCapital = [cap]
+    n = 0
+    while n < tirs:
+        if cap < apuesta and capital != 'i':
+            print("No hay suficiente capital para continuar.")
+            break
+        tirada = random.randint(0, 36)
+        if(tirada not in negro):
+            cap -= apuesta
+            apuesta = cap*0.01
+            historialCapital.append(cap)
+        else:
+            cap += apuesta
+            apuesta *= 2
+            historialCapital.append(cap)
+        n += 1
+    print(f"\El capital en la tirada numero {n} es de ${cap}")
+    return historialCapital
+
+def martingalaInf(tirs):
+    cap = 0
+    historialCapital = [cap]
+    resultados = []
+    apuesta_inicial = 100
+    apuesta = apuesta_inicial    
+    n = 0
+    cont = 0
+    while n < tirs:
+        tirada = random.randint(0, 36)
+        if(tirada not in negro):
+            cap -= apuesta
+            apuesta *= 2
+            historialCapital.append(cap)
+            #resultados.append(0)
+        else:
+            cap += apuesta
+            apuesta = apuesta_inicial
+            historialCapital.append(cap)
+            #resultados.append(1)
+            cont += 1
+        resultados.append(cont/(n + 1))
+        n += 1
+    #print(f"\El capital en la tirada numero {n} es de ${cap}")
+
+    # plt.figure(figsize=(10, 6))
+    # plt.bar(range(len(resultados)), resultados, color='skyblue')
+    # plt.title('Proporción de éxitos en cada tirada')
+    # plt.xlabel('Número de tirada')
+    # plt.ylabel('Proporción de éxitos')
+    # plt.grid(True, linestyle='--', alpha=0.7)
+    # plt.show()
+    return historialCapital
+
+def dalembertInf(tirs, cap):
+    n = 0
+    cap = 0
+    inv = 100
+    apuesta = inv
+    historialCapital = [cap]
+    while n < tirs:
+        tirada = random.randint(0, 36)
+        if tirada not in negro:
+            cap -= apuesta
+            apuesta += inv            
+            historialCapital.append(cap)
+        else:
+            cap += apuesta
+            if apuesta > (inv):
+                apuesta -= inv
+            historialCapital.append(cap)
+        n += 1
+    print(f"\ El capital en la tirada numero {n} es de ${cap}")
+    return historialCapital
+
+def fibonacciInf(tirs, cap):
+    cap = 0
+    inv = 100
+    apuesta = inv
+    historialCapital = [cap]
+    n = 0
+    posicion_fibonacci = 0
+    while n < tirs:
+        apuesta = generador_fibonacci(posicion_fibonacci) * 100
+        resultado = random.randint(0, 36)
+        if resultado in negro:
+            cap += apuesta
+            posicion_fibonacci = max(posicion_fibonacci - 2, 0)  
+        else:
+            cap -= apuesta
+            posicion_fibonacci += 1
+        historialCapital.append(cap)
+        n += 1
+    print(f"\ El capital en la tirada numero {n} es de ${cap}")
+    print(historialCapital)
+    return historialCapital
+
+def nuevaEstrategiaInf(tirs, cap):
+    cap = 0
+    inv = 100
+    apuesta = inv
+    historialCapital = [cap]
+    n = 0
+    while n < tirs:
+        tirada = random.randint(0, 36)
+        if(tirada not in negro):
+            cap -= apuesta
+            apuesta = inv
+            historialCapital.append(cap)
+        else:
+            cap += apuesta
+            apuesta *= 2
+            historialCapital.append(cap)
+        n += 1
+    print(f"\El capital en la tirada numero {n} es de ${cap}")
+    return historialCapital
 
 
-def simulacion_ruleta(corrs, tirs):
+def simulacion_ruleta(corrs, tirs, cap):
+    # if(cap == 'i'):
+    #     martins = []
+    #     dalamberts = []
+    #     fibos = []
+    #     nuevasEstrategias=[]
+    #     for corr in range(corrs):
+    #         martins.append(martingalaInf(tirs))#, colEl, capitalMax, invIni))
+    #         dalamberts.append(dalembertInf(tirs, cap))#, colEl, capitalMax, invIni))
+    #         fibos.append(fibonacciInf(tirs, cap))
+    #         nuevasEstrategias.append(nuevaEstrategiaInf(tirs, cap))
+    # else:
     martins = []
     dalamberts = []
     fibos = []
+    nuevasEstrategias=[]
     for corr in range(corrs):
-        martins.append(martingala(tirs))#, colEl, capitalMax, invIni))
-        dalamberts.append(dalembert(tirs))#, colEl, capitalMax, invIni))
-        fibos.append(fibonacci_1(tirs))
+        martins.append(martingala(tirs, cap))#, colEl, capitalMax, invIni))
+        dalamberts.append(dalembert(tirs, cap))#, colEl, capitalMax, invIni))
+        fibos.append(fibonacci(tirs, cap))
+        nuevasEstrategias.append(nuevaEstrategia(tirs, cap))
+
 
     #tiradas = list(range(1, tirs + 1))
     plt.figure(figsize=(12, 8))
@@ -127,23 +293,20 @@ def simulacion_ruleta(corrs, tirs):
     plt.ylabel('Capital en n')
     plt.title(f'Evolucion del capital neto usando la estrategia fibonacci en {corrs} corridas')
     plt.grid(True)
+
+    plt.subplot(2, 2, 4)
+    for corrida in nuevasEstrategias:
+        tiradas = list(range(1, len(corrida) + 1))
+        plt.plot(tiradas, corrida, alpha=0.5)
+    plt.xlabel('Número de tiradas (n)')
+    plt.ylabel('Capital en n')
+    plt.title(f'Capital en n tiradas usando nuestra estrategia.')
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
     plt.show()
 
-    # plt.subplot(2, 2, 4)
-    # for corrida in desvios:
-    #     plt.plot(tiradas, corrida, alpha=0.5)
-    # plt.axhline(y=10.67, color='red', linestyle='--', label='Desvio estandar poblacional esperado (10,67)')
-    # plt.xlabel('Número de tiradas (n)')
-    # plt.ylabel('Desvios estandar')
-    # plt.title(f'Desvios estandar en {tirs} tiradas')
-    # plt.legend()
-    # plt.grid(True)
-    # plt.tight_layout()
-    # plt.show()
-
-simulacion_ruleta(10, 2000)
-
-
+simulacion_ruleta(5, 2000, 50000)
 
 
 

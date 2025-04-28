@@ -1,1 +1,7 @@
-1
+    # plt.figure(figsize=(10, 6))
+    # plt.bar(range(len(resultados)), resultados, color='skyblue')
+    # plt.title('Proporción de éxitos en cada tirada')
+    # plt.xlabel('Número de tirada')
+    # plt.ylabel('Proporción de éxitos')
+    # plt.grid(True, linestyle='--', alpha=0.7)
+    # plt.show()
