@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import sys
 
 estrategias = ['m','d','f','o']
-print(sys.argv)
 
 if sys.argv[1]!="-c" or sys.argv[3]!="-n" or sys.argv[5]!="-s" or sys.argv[7]!="-a" or sys.argv[6] not in estrategias:
     print(f"Uso: Python SimulacionRuleta.py -c <Cantidad de tiradas> -n <numero de corridas> -s <estrategia ({estrategias})> -a <capital a usar (infinito (i) - numero de capital)>")
@@ -16,12 +15,6 @@ if(sys.argv[8] == 'i'):
 else:
     capital = int(sys.argv[8])
 estrategia = sys.argv[6]
-
-# estrategia martingale (m): se invierte x cantidad de capital en un valor. si ese valor genera perdida, para la proxima eleccion de valor se duplica la inversion x. la esperanza de esta estrategia se situa en la confianza de que tarde o temprano va a salir un valor elegido
-
-# estrategia D'Alembert (d): primero se debe de elegir una unidad, despues invertis x cantidad de capital en un valor. si se pierde, entonces a x se le suma una unidad y se invierte esa suma. si se gana, entonces a x se le resta una unidad y se invierte el resultado de esa resta
-
-# estrategia Fibonacci (f): se elige una unidad y se invierte esa misma la primera vez. cada vez que se pierda, se pasa al siguiente numero en la secuencia de fibonacci. cada vez que se gana se retroceden dos numeros en la secuencia (excepto obvio en los dos primeros casos)
 
 negro = [2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35]
 
@@ -129,7 +122,6 @@ def fibonacci(tirs, capital):
         historialCapital.append(cap)
         n += 1
     print(f"\ El capital en la tirada numero {n} es de ${cap}")
-    print(historialApuestas)
     return historialCapital, resultados
 
 def nuevaEstrategia(tirs, capital):
@@ -172,8 +164,6 @@ def simulacion_ruleta(corrs, tirs, cap, e):
             c, a = martingala(tirs, cap)
             corridas.append(c)
             exitosprop.append(a)
-        print(corridas)
-        print(exitosprop)
     elif(e == 'd'):
         estrategia = 'DLambert'
         for corr in range(corrs):
