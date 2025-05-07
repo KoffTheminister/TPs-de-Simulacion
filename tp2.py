@@ -202,6 +202,7 @@ def simulacion_ruleta(corrs, tirs, cap, e):
     plt.xlabel('Número de tirada')
     plt.ylabel('Proporción de éxitos')
     plt.grid(True, linestyle='--', alpha=0.7)
+    plt.axhline(y=18/37, color='red', linestyle='--', label='Frecuencia relativa final esperada')
     plt.tight_layout()
     plt.grid(True)
     plt.show()
