@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import chi2
+import math
 
 def generador2(seed, n):
   lista = []
@@ -55,11 +56,6 @@ def midSquare(seed,n):
     num = int(x[mid-2:mid+2])
     resultados.append(num)
   return resultados
-# print(midSquare(666667, 100))
-print(generador2(666667, 1000))
-
-
-
 
 def run_test(nMin,nMax,numeros):
   mayor = max(numeros)
@@ -80,10 +76,11 @@ def run_test(nMin,nMax,numeros):
   n1 =len(n_menores)
   n2 =len(n_mayores)
   ## calculamos la media esperada    
-
-
-
-
+  media_esperada= ((2*n1*n2)/n1+n2)+1
+  varianza = (2*n1*n2*(2*n1*n2-n1-n2))/((n1+n2)*(n1+n2)*(n1+n2-1))
+  desvio_estandar= varianza ** 0.5
+  ## calculamos el valor de z
+  
 
 
 # test de chi cuadradado
@@ -120,11 +117,68 @@ def chi_cuadrado(data, k, alpha):
   
   return chi_cuadrado_stat, valor_critico, result
 
-# prueba del tes de chi-cuadrado 
-valores_generados = generador2(666667, 1000)
-numeros = [valor[1] for valor in valores_generados]
+# # prueba del tes de chi-cuadrado 
+# valores_generados = generador2(666667, 1000)
+# numeros = [valor[1] for valor in valores_generados]
 
-chi_cuadrado_stat, valor_critico, result = chi_cuadrado(numeros, 10, 0.05)
-print(f"Estadística Chi Cuadrado: {chi_cuadrado_stat}")
-print(f"Valor crítico: {valor_critico}")
-print(result)
+# chi_cuadrado_stat, valor_critico, result = chi_cuadrado(numeros, 10, 0.05)
+# print(f"Estadística Chi Cuadrado: {chi_cuadrado_stat}")
+# print(f"Valor crítico: {valor_critico}")
+# print(result)
+
+
+
+def calculateAreaUnderUni(x_min, x_max, x):
+    return (1 / (x_max - x_min)) * (x - x_min)
+
+def kolmogorovSmirnovTest(samples, n_divs):
+  samples = np.sort(samples)
+  histo = np.zeros(n_divs)
+  x_min = min(samples)
+  x_max = max(samples)
+  divSize = (x_max - x_min) / n_divs
+  for s in samples:
+    index = int((s - x_min) / divSize)
+    if index >= n_divs:
+      index = n_divs - 1
+    histo[index] += 1
+
+  total = len(samples)
+  emp_cdf = np.cumsum(histo) / total
+
+  maxDiff = 0
+  for j in range(n_divs):
+      x_val = x_min + (j + 1) * divSize 
+      theor_cdf = calculateAreaUnderUni(x_min, x_max, x_val)
+      diff = abs(emp_cdf[j] - theor_cdf)
+      if diff > maxDiff:
+          maxDiff = diff
+  return maxDiff
+
+#print(kolmogorovSmirnovTest(np.random.uniform(0, 1, size=1000), 10))
+      
+def andersonDarlingTest(samples, n_divs):
+  samples = np.sort(samples)
+  x_min = min(samples)
+  x_max = max(samples)
+  divSize = (x_max - x_min) / n_divs
+  aSquared = 0
+  n = len(samples)
+  for s in range(len(samples)):
+    F_i = calculateAreaUnderUni(x_min, x_max, samples[s])
+    F_n_i = calculateAreaUnderUni(x_min, x_max, samples[n - s - 1])
+
+    if F_i <= 0 or F_n_i >= 1:
+      # avoid log(0) and division by zero
+      continue
+
+    term = (2 * s + 1) * (math.log(F_i) + math.log(1 - F_n_i))
+    aSquared += term
+  aSquared = -len(samples) -(1/len(samples))*aSquared
+  return aSquared
+
+print(andersonDarlingTest(np.random.uniform(0, 1, size=1000), 10))
+
+
+
+
