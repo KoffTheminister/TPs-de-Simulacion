@@ -55,9 +55,13 @@ def midSquare(seed,n):
   return resultados
 
 def run_test(nMin,nMax,numeros):
+  ultimo = 0
+  bandera1=False
+  bandera2= False
   mayor = max(numeros)
   suma = 0
   num_combertidos=[]
+  #se transforma el intervalo dado de tal manera que este entre 0 y 1 
   for n in numeros:
     num_combertidos.append(n/mayor)
   for n in num_combertidos:
@@ -67,16 +71,34 @@ def run_test(nMin,nMax,numeros):
   n_mayores=[]
   for n in num_combertidos:
     if(n<nMax):
+      bandera1=True
       n_mayores.append(n)
+      ultimo = 1
     elif(n>nMax):
+      bandera2= True
       n_menores.append(n)
+      ultimo = 2
+    if(bandera2== True and bandera1==True):
+      c_cambio = c_cambio+1
+      bandera1 = False
+      bandera2 = False
+      if(ultimo == 1):
+        bandera1 = True
+      if(ultimo == 2):
+        bandera2 = True
   n1 =len(n_menores)
   n2 =len(n_mayores)
   ## calculamos la media esperada    
   media_esperada= ((2*n1*n2)/n1+n2)+1
-  varianza = (2*n1*n2*(2*n1*n2-n1-n2))/((n1+n2)*(n1+n2)*(n1+n2-1))
+  varianza = (2*n1*n2*(2*n1*n2-n1-n2))/((n1+n2)(n1+n2)(n1+n2-1))
   desvio_estandar= varianza ** 0.5
-  ## calculamos el valor de z
+  # calculamos el valor de z
+  z = (c_cambio-media_esperada)/desvio_estandar
+  # se evalua a z con una eficacio de 0.005
+  if(abs(z)<=1.96):
+    print("prueba exitosa , se puede consideradr como aleatoria ")
+  elif(abs(z)>1.96):
+    print("prueba rechasada, la secuencia probablemente no es nula ")
   
 
 # test de chi cuadradado
