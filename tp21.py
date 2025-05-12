@@ -28,6 +28,7 @@ def midSquare(seed,n):
     mid = len (x) // 2
     num = int(x[mid-2:mid+2])
     resultados = np.append(resultados, num)
+    print(resultados)
   return resultados
 
 def run_test(numbers):
@@ -172,8 +173,8 @@ def histograma(xs, min, max):
   plt.tight_layout()
   plt.show()
 
-def lagPlot(xs, m):
-  valores_escala = [(x * 1000) // m for x in xs]
+def lagPlot(xs):
+  valores_escala = [int (x * 1000) for x in xs]
 
   x_vals = valores_escala[:-1]
   y_vals = valores_escala[1:]
@@ -187,17 +188,47 @@ def lagPlot(xs, m):
   plt.tight_layout()
   plt.show()
 
+
+
+def lagPlotMidSquare(xs):
+    # Normalización al rango [0, 1) dividiendo por 10000 (porque son 4 cifras)
+    valores_normalizados = [x / 10000 for x in xs]
+
+    # Escalamos al rango [0, 1000)
+    valores_escala = [int(x * 1000) for x in valores_normalizados]
+
+    x_vals = valores_escala[:-1]
+    y_vals = valores_escala[1:]
+
+    plt.figure(figsize=(10, 5))
+    plt.scatter(x_vals, y_vals, color='deepskyblue', s=5)
+    plt.xlabel("x(i)")
+    plt.ylabel("x(i+1)")
+    plt.title("Gráfico de Retardo (Método del Cuadrado Medio)")
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
 lista = np.array([])
 n = 50 #numero de iteraciones
 m = 1000 #numero de muestras
-for i in range(m):
-  x = midSquare(i, n) #generador
-  lista = np.append(lista, x[n - 1]) #en el generador2 poner x[n] y en el otro poner x[n - 1]
+# for i in range(m):
+#   x = midSquare(i, n) #generador
+#   lista = np.append(lista, x[n - 1]) #en el generador2 poner x[n] y en el otro poner x[n - 1]
 # min = min(lista)
 # max = max(lista)
 # histograma(lista, min, max)
 # # print(lista, m)
-lagPlot(lista, m)
+
+
+datos = midSquare(5731, 1000)
+unicos = np.unique(datos)
+print(unicos)
+lagPlotMidSquare(unicos)
+
+# datos = generador2(5731, 1000)
+# print(datos)
+# lagPlot(datos)
 
 #print(run_test(lista))
 
