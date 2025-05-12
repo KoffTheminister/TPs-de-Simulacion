@@ -2,23 +2,20 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import chi2
 import math
+import random
+import pandas as pd
+from pandas.plotting import lag_plot
 
 def generador2(seed, n):
-  lista = []
+  lista = np.array([])
   a = 2**16 + 3
   m = 2**31
-  comp = []
-  x = (a*seed)%m
-  comp.append(x)
-  comp.append(x/m)
-  lista.append(comp)
+  ultimo = (a*seed)%m
+  lista = np.append(lista, ultimo/m)
   i = 1
   while(i <= n):
-    comp = []
-    x = (a*lista[i - 1][0])%m
-    comp.append(x)
-    comp.append(x/m)
-    lista.append(comp)
+    ultimo = (a*ultimo)%m
+    lista = np.append(lista, ultimo/m)
     i += 1
 
   return lista
@@ -48,13 +45,13 @@ def generador2(seed, n):
   # # plt.show()
   
 def midSquare(seed,n):
-  resultados= []
+  resultados = np.array([])
   num = seed
   for i in range(n):
     x= str(num*num).zfill(8)
     mid = len (x) // 2
     num = int(x[mid-2:mid+2])
-    resultados.append(num)
+    resultados = np.append(resultados, num)
   return resultados
 
 def run_test(nMin,nMax,numeros):
@@ -81,7 +78,6 @@ def run_test(nMin,nMax,numeros):
   desvio_estandar= varianza ** 0.5
   ## calculamos el valor de z
   
-
 
 # test de chi cuadradado
 # k: numero de intervalos
@@ -177,8 +173,60 @@ def andersonDarlingTest(samples, n_divs):
   aSquared = -len(samples) -(1/len(samples))*aSquared
   return aSquared
 
-print(andersonDarlingTest(np.random.uniform(0, 1, size=1000), 10))
+def secDeSeries(xs):
+  plt.figure(figsize=(10, 4))
+  plt.plot(xs, marker='o', linestyle='-', color='steelblue')
+  plt.title("Secuencia de una Serie Aleatoria")
+  plt.xlabel("Índice (t)")
+  plt.ylabel("Valor")
+  plt.grid(True)
+  plt.tight_layout()
+  plt.show()
 
+def histograma(xs, min, max):
+  bins = np.linspace(min, max, 51)
 
+  counts, bin_edges = np.histogram(xs, bins=bins)
 
+  relative_freq = counts / len(xs)
+
+  bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
+
+  plt.figure(figsize=(10, 4))
+  plt.bar(bin_centers, relative_freq, width=bin_edges[1]-bin_edges[0],
+          color='cornflowerblue', edgecolor='black')
+  plt.axhline(y=0.02, color='red', linestyle='--', linewidth=1.5, label='Frecuencia esperada')
+  plt.title("Histograma de Frecuencia Relativa (por bin)")
+  plt.xlabel("Intervalo")
+  plt.ylabel("Frecuencia relativa")
+  plt.grid(axis='y', linestyle='--', alpha=0.7)
+  plt.tight_layout()
+  plt.show()
+
+def lagPlot(xs, m):
+    # Escalar los valores para visualización discreta
+    valores_escala = [(x * 1000) // m for x in xs]
+
+    x_vals = valores_escala[:-1]
+    y_vals = valores_escala[1:]
+    
+    plt.figure(figsize=(10, 5))
+    plt.scatter(x_vals, y_vals, color='deepskyblue', s=5)
+    plt.xlabel("x(i)")
+    plt.ylabel("x(i+1)")
+    plt.title("Gráfico de Retardo")
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+lista = np.array([])
+n = 50 #numero de iteraciones
+m = 10000 #numero de muestras
+for i in range(m):
+  x = generador2(i, n) #generador
+  lista = np.append(lista, x[n]) #en el generador2 poner x[n] y en el otro poner x[n - 1]
+min = min(lista)
+max = max(lista)
+#histograma(lista, min, max)
+lagPlot(lista, m)
 
