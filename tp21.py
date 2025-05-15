@@ -28,6 +28,7 @@ def midSquare(seed,n):
     mid = len (x) // 2
     num = int(x[mid-2:mid+2])
     resultados = np.append(resultados, num)
+    print(resultados)
   return resultados
 
 def run_test(numbers):
@@ -172,8 +173,8 @@ def histograma(xs, mini, maxi):
   plt.tight_layout()
   plt.show()
 
-def lagPlot(xs, m):
-  valores_escala = [(x * 1000) // m for x in xs]
+def lagPlot(xs):
+  valores_escala = [int (x * 1000) for x in xs]
 
   x_vals = valores_escala[:-1]
   y_vals = valores_escala[1:]
