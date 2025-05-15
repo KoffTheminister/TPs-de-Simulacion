@@ -96,11 +96,11 @@ def chi_cuadrado(data, k, alpha):
 def calculateAreaUnderUni(x_min, x_max, x):
     return (1 / (x_max - x_min)) * (x - x_min)
 
-def kolmogorovSmirnovTest(samples, n_divs):
+def kolmogorovSmirnovTest(samples, n_divs, x_min, x_max):
   samples = np.sort(samples)
   histo = np.zeros(n_divs)
-  x_min = min(samples)
-  x_max = max(samples)
+  # x_min = min(samples)
+  # x_max = max(samples)
   divSize = (x_max - x_min) / n_divs
   for s in samples:
     index = int((s - x_min) / divSize)
@@ -120,11 +120,11 @@ def kolmogorovSmirnovTest(samples, n_divs):
           maxDiff = diff
   return maxDiff
 
-def andersonDarlingTest(samples, n_divs):
+def andersonDarlingTest(samples, x_min, x_max):
   import math
   samples = np.sort(samples)
-  x_min = min(samples)
-  x_max = max(samples)
+  # x_min = min(samples)
+  # x_max = max(samples)
   n = len(samples)
   aSquared_sum = 0
   epsilon = 1e-10
@@ -152,8 +152,8 @@ def secDeSeries(xs):
   plt.tight_layout()
   plt.show()
 
-def histograma(xs, min, max):
-  bins = np.linspace(min, max, 51)
+def histograma(xs, mini, maxi):
+  bins = np.linspace(mini, maxi, 51)
 
   counts, bin_edges = np.histogram(xs, bins=bins)
 
@@ -187,17 +187,16 @@ def lagPlot(xs, m):
   plt.tight_layout()
   plt.show()
 
-lista = np.array([])
-n = 50 #numero de iteraciones
-m = 1000 #numero de muestras
-for i in range(m):
-  x = midSquare(i, n) #generador
-  lista = np.append(lista, x[n - 1]) #en el generador2 poner x[n] y en el otro poner x[n - 1]
-# min = min(lista)
-# max = max(lista)
-# histograma(lista, min, max)
-# # print(lista, m)
-lagPlot(lista, m)
 
-#print(run_test(lista))
+lista = (generador2(12329, 1000)) #generador
+print(lista)
+mini = min(lista)
+maxi = max(lista)
+histograma(lista, mini, maxi)
+secDeSeries(lista)
+lagPlot(lista, 1000)
+# print(chi_cuadrado(lista, 10, 0.05))
+# run_test(lista)
+# print(kolmogorovSmirnovTest(lista, 50, mini, maxi))
+# print(andersonDarlingTest(lista, mini, maxi))
 
