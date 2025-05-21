@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import random
 import math
 from scipy.stats import chi2
-from scipy.stats import norm, poisson
+from scipy.stats import norm, poisson, nbinom
 
 def gcl(seed, n):
   lista = []#lista = np.array([])
@@ -28,7 +28,7 @@ def normal_gen1(media, ds, k, n): #basico
   return nuevaLista
 
 def normal_gen2(media, ds, k, n): #directo
-  lista = gcl(1236 + random.randint(1, 10000), k*n)#lista = gcl(123654, k*n)
+  lista = gcl(123654, n + 2)
   nuevaLista = []
   for i in range(1, n, 2):
     nuevaLista.append(np.sqrt(-2*math.log(lista[i]))*math.cos(2*math.pi*lista[i+1]))
@@ -68,44 +68,48 @@ def pascal_gen(k, p, m):
       i += 1
   return pList
 
+import numpy as np
+
 def run_test(numbers):
-  mean = np.mean(numbers)
-  n1 = 0
-  n2 = 0
-  runs = 1
-  prev = numbers[0] >= mean
+    mean = np.mean(numbers)
+    n1 = 0  # cantidad de números >= media
+    n2 = 0  # cantidad de números < media
+    runs = 1
+    prev = numbers[0] >= mean
 
-  for i in range(1, len(numbers)):
-    curr = numbers[i] >= mean
-    if curr != prev:
-        runs += 1
-    prev = curr
-    if curr:
-      n2 += 1
+    if prev:
+        n1 += 1
     else:
-      n1 += 1
+        n2 += 1
 
-  if n1 == 0 or n2 == 0:
-    print("Sin varianza, por lo tanto no hay run tests aplicables")
-    return
+    for i in range(1, len(numbers)):
+        curr = numbers[i] >= mean
+        if curr != prev:
+            runs += 1
+        prev = curr
+        if curr:
+            n1 += 1
+        else:
+            n2 += 1
 
-  expected_runs = ((2 * n1 * n2) / (n1 + n2)) + 1
-  variance = (2 * n1 * n2 * (2 * n1 * n2 - n1 - n2)) / (((n1 + n2) ** 2) * (n1 + n2 - 1))
-  std_dev = np.sqrt(variance)
-  z = (runs - expected_runs) / std_dev
+    if n1 == 0 or n2 == 0:
+        print("Sin varianza, por lo tanto no hay run tests aplicables")
+        return
 
-  print(f"corridas observadas: {runs}")
-  print(f"corridas esperadas: {expected_runs:.4f}")
-  print(f"Z-value: {z:.4f}")
+    expected_runs = ((2 * n1 * n2) / (n1 + n2)) + 1
+    variance = (2 * n1 * n2 * (2 * n1 * n2 - n1 - n2)) / (((n1 + n2) ** 2) * (n1 + n2 - 1))
+    std_dev = np.sqrt(variance)
+    z = (runs - expected_runs) / std_dev
 
-  if abs(z) <= 1.96:
-    print("✅ run tests pasadas, la secuencia parece ser aleatoria")
-  else:
-    print("❌ run tests no pasadas, la secuencia parece no ser aleatoria")
+    print(f"Corridas observadas: {runs}")
+    print(f"Corridas esperadas: {expected_runs:.4f}")
+    print(f"Valor Z: {z:.4f}")
 
-# test de chi cuadradado
-# k: numero de intervalos
-# alpha: nivel de significancia
+    if abs(z) <= 1.96:
+        print("✅ Run test pasada, la secuencia parece ser aleatoria")
+    else:
+        print("❌ Run test no pasada, la secuencia parece no ser aleatoria")
+
 def chi_cuadrado(data, k, alpha):
   data = np.array(data)
   min_val = 0
@@ -130,6 +134,95 @@ def chi_cuadrado(data, k, alpha):
   
   return chi_cuadrado_stat, valor_critico, result
 
+import numpy as np
+from scipy.stats import poisson, chi2
+
+def chi_cuadrado_poisson(data, alpha=0.05, max_k=None, lambda_esperada=None):
+  data = np.array(data)
+  n = len(data)
+
+  if lambda_esperada is None:
+    lambda_esperada = np.mean(data)
+
+  valores, frec_obs = np.unique(data, return_counts=True)
+
+  if max_k is None:
+    max_k = max(valores)
+
+  frec_esp = poisson.pmf(valores, mu=lambda_esperada) * n
+
+  valores_grup = []
+  frec_obs_grup = []
+  frec_esp_grup = []
+
+  acum_obs = 0
+  acum_esp = 0
+  for i in range(len(valores)):
+    acum_obs += frec_obs[i]
+    acum_esp += frec_esp[i]
+    if acum_esp >= 5:
+      valores_grup.append(valores[i])
+      frec_obs_grup.append(acum_obs)
+      frec_esp_grup.append(acum_esp)
+      acum_obs = 0
+      acum_esp = 0
+
+  if acum_esp > 0:
+    frec_obs_grup[-1] += acum_obs
+    frec_esp_grup[-1] += acum_esp
+  chi_stat = np.sum((np.array(frec_obs_grup) - np.array(frec_esp_grup))**2 / np.array(frec_esp_grup))
+
+  df = len(frec_esp_grup) - 1 - (1 if lambda_esperada is None else 0)
+
+  valor_critico = chi2.ppf(1 - alpha, df)
+
+  if chi_stat < valor_critico:
+    resultado = "✅ No se rechaza H₀: los datos siguen una distribución Poisson."
+  else:
+    resultado = "❌ Se rechaza H₀: los datos no siguen una distribución Poisson."
+
+  return chi_stat, valor_critico, df, resultado
+
+import numpy as np
+from scipy.stats import nbinom, chi2
+
+def chi_cuadrado_pascal(data, k, p, alpha=0.05):
+  
+  data = np.array(data)
+  n = len(data)
+  valores, frec_obs = np.unique(data, return_counts=True)
+  frec_esp = nbinom.pmf(valores, k, p) * n
+  valores_grup = []
+  frec_obs_grup = []
+  frec_esp_grup = []
+  
+  acum_obs = 0
+  acum_esp = 0
+  for i in range(len(valores)):
+    acum_obs += frec_obs[i]
+    acum_esp += frec_esp[i]
+    if acum_esp >= 5:
+      valores_grup.append(valores[i])
+      frec_obs_grup.append(acum_obs)
+      frec_esp_grup.append(acum_esp)
+      acum_obs = 0
+      acum_esp = 0
+
+  if acum_esp > 0:
+    frec_obs_grup[-1] += acum_obs
+    frec_esp_grup[-1] += acum_esp
+  chi_stat = np.sum((np.array(frec_obs_grup) - np.array(frec_esp_grup))**2 / np.array(frec_esp_grup))
+
+  df = len(frec_esp_grup) - 1 - 0
+
+  valor_critico = chi2.ppf(1 - alpha, df)
+
+  if chi_stat < valor_critico:
+    resultado = "✅ No se rechaza H₀: los datos siguen una distribución Pascal."
+  else:
+    resultado = "❌ Se rechaza H₀: los datos no siguen una distribución Pascal."
+
+  return chi_stat, valor_critico, df, resultado
 
 def calculateAreaUnderUni(x_min, x_max, x):
   return (1 / (x_max - x_min)) * (x - x_min)
@@ -149,15 +242,11 @@ def calculateAreaUnderPas(k, p, x):
     suma += math.comb(k + i - 1, i)*(p**k)*((1 - p)**i)
   return suma
 
-#def kolmogorovSmirnovTest(samples, m, ds):
-def kolmogorovSmirnovTest(samples, myLambda):
+def kolmogorovSmirnovTest(samples, m, ds):
   samples = np.sort(samples)
   n = len(samples)
   emp_cdf = np.arange(1, n+1) / n
-  #theor_cdf = norm.cdf(samples, loc=m, scale=ds)
-  theor_cdf = []
-  for x in samples:
-    theor_cdf.append(calculateAreaUnderPoi(x, myLambda))
+  theor_cdf = norm.cdf(samples, loc=m, scale=ds)
   theor_cdf = np.array(theor_cdf)
   max_diff = np.max(np.abs(emp_cdf - theor_cdf))
   return max_diff
@@ -165,12 +254,12 @@ def kolmogorovSmirnovTest(samples, myLambda):
 def andersonDarlingTest(samples, m, ds):
   samples = np.sort(samples)
   n = len(samples)
-  epsilon = 1e-10  # to avoid log(0)
+  epsilon = 1e-10
 
   aSquared_sum = 0
   for i in range(n):
     Fi = norm.cdf(samples[i], loc=m, scale=ds)
-    Fi = min(max(Fi, epsilon), 1 - epsilon)  # Clamp Fi to avoid log(0)
+    Fi = min(max(Fi, epsilon), 1 - epsilon)
     aSquared_sum += (2 * i + 1) * (math.log(Fi) + math.log(1 - norm.cdf(samples[n - i - 1], loc=m, scale=ds)))
 
   A2 = -n - (aSquared_sum / n)
@@ -187,64 +276,88 @@ def secDeSeries(xs):
   plt.show()
 
 def histograma_normal(xs, realM, realDs):
-    mini = min(xs)
-    maxi = max(xs)
-    bins = np.linspace(mini, maxi, 101)
+  mini = min(xs)
+  maxi = max(xs)
+  bins = np.linspace(mini, maxi, 101)
 
-    counts, bin_edges = np.histogram(xs, bins=bins)
-    relative_freq = counts / len(xs)
+  counts, bin_edges = np.histogram(xs, bins=bins)
+  relative_freq = counts / len(xs)
+  bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
 
-    bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
+  media = np.mean(xs)
+  desviacion = np.std(xs)
+  x = np.linspace(media - 4*desviacion, media + 4*desviacion, 1000)
+  y = norm.pdf(x, media, desviacion)
+  y *= (bin_edges[1] - bin_edges[0]) 
+  plt.figure(figsize=(10, 4))
+  plt.plot(x, y, label=f'N({media}, {desviacion}²), funcion de densidad resultante', color='blue')
 
-    media = np.mean(xs)
-    desviacion = np.std(xs)
-    x = np.linspace(media - 4*desviacion, media + 4*desviacion, 1000)
-    y = norm.pdf(x, media, desviacion)
-    y *= (bin_edges[1] - bin_edges[0]) #
-    plt.figure(figsize=(10, 4))
-    plt.plot(x, y, label=f'N({media}, {desviacion}²), funcion de densidad resultante', color='blue')
+  xr = np.linspace(realM - 4*realDs, realM + 4*realDs, 1000)
+  yr = norm.pdf(xr, realM, realDs)
+  yr *= (bin_edges[1] - bin_edges[0])
+  plt.plot(xr, yr, label=f'N({realM}, {realDs}²), verdadera distribucion', color='green')
 
-    xr = np.linspace(realM - 4*realDs, realM + 4*realDs, 1000)
-    yr = norm.pdf(xr, realM, realDs)
-    yr *= (bin_edges[1] - bin_edges[0]) #
-    plt.plot(xr, yr, label=f'N({realM}, {realDs}²), verdadera distribucion', color='green')
-
-    plt.bar(bin_centers, relative_freq, width=bin_edges[1]-bin_edges[0],
-             color='cornflowerblue', edgecolor='black', alpha=0.7)
+  plt.bar(bin_centers, relative_freq, width=bin_edges[1]-bin_edges[0],
+            color='cornflowerblue', edgecolor='black', alpha=0.7)
     
-    plt.title("Histograma de Frecuencia Relativa vs Distribución Normal")
-    plt.xlabel("Valor")
-    plt.ylabel("Frecuencia relativa")
-    plt.legend()
-    plt.grid(axis='y', linestyle='--', alpha=0.7)
-    plt.tight_layout()
-    plt.show()
+  plt.title("Histograma de Frecuencia Relativa vs Distribución Normal")
+  plt.xlabel("Valor")
+  plt.ylabel("Frecuencia relativa")
+  plt.legend()
+  plt.grid(axis='y', linestyle='--', alpha=0.7)
+  plt.tight_layout()
+  plt.show()
 
 def histograma_poisson(xs, realLambda):
-    mini = min(xs)
-    maxi = max(xs)
-    bins = np.linspace(mini, maxi, 101)
+  mini = min(xs)
+  maxi = max(xs)
+  bins = np.linspace(mini, maxi, 101)
 
-    counts, bin_edges = np.histogram(xs, bins=bins)
-    relative_freq = counts / len(xs)
+  counts, bin_edges = np.histogram(xs, bins=bins)
+  relative_freq = counts / len(xs)
+  bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
 
-    bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
-
-    x_vals = np.arange(mini, maxi + 1)
-    pmf_vals = poisson.pmf(x_vals, mu=realLambda)
-    plt.plot(x_vals, pmf_vals, 'o-', color='green', linewidth=2,
+  x_vals = np.arange(mini, maxi + 1)
+  pmf_vals = poisson.pmf(x_vals, mu=realLambda)
+  plt.plot(x_vals, pmf_vals, 'o-', color='green', linewidth=2,
              label=f'Distribución Poisson (λ={realLambda})')
 
-    plt.bar(bin_centers, relative_freq, width=bin_edges[1]-bin_edges[0],
+  plt.bar(bin_centers, relative_freq, width=bin_edges[1]-bin_edges[0],
              color='cornflowerblue', edgecolor='black', alpha=0.7)
     
-    plt.title("Histograma de Frecuencia Relativa vs Distribución Poisson")
-    plt.xlabel("Valor")
-    plt.ylabel("Frecuencia relativa")
-    plt.legend()
-    plt.grid(axis='y', linestyle='--', alpha=0.7)
-    plt.tight_layout()
-    plt.show()
+  plt.title("Histograma de Frecuencia Relativa vs Distribución Poisson")
+  plt.xlabel("Valor")
+  plt.ylabel("Frecuencia relativa")
+  plt.legend()
+  plt.grid(axis='y', linestyle='--', alpha=0.7)
+  plt.tight_layout()
+  plt.show()
+
+def histograma_pascal(xs, p, k):
+  mini = min(xs)
+  maxi = max(xs)
+  bins = np.linspace(mini, maxi, 101)
+
+  counts, bin_edges = np.histogram(xs, bins=bins)
+  relative_freq = counts / len(xs)
+  bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
+
+  x_vals = np.arange(mini, maxi + 1)
+  pmf_vals = nbinom.pmf(x_vals, k, p)
+
+  plt.plot(x_vals, pmf_vals, 'o-', color='green', linewidth=2,
+    label=f'Distribución Pascal (k={k}, p={p:.2f})')
+
+  plt.bar(bin_centers, relative_freq, width=bin_edges[1]-bin_edges[0],
+    color='cornflowerblue', edgecolor='black', alpha=0.7)
+
+  plt.title("Histograma de Frecuencia Relativa vs Distribución Pascal")
+  plt.xlabel("Valor")
+  plt.ylabel("Frecuencia relativa")
+  plt.legend()
+  plt.grid(axis='y', linestyle='--', alpha=0.7)
+  plt.tight_layout()
+  plt.show()
 
 def lagPlot(xs):
   valores_escala = [int (x * 1000) for x in xs]
@@ -278,14 +391,26 @@ n = 10000
 #   suma += andersonDarlingTest(normal_gen2(media, i, k, n), media, i)
 # print(suma/100)
 
-aLambda = 1
-m = 10000
-#histograma_poisson(poisson_gen(aLambda, m), aLambda)
-suma = 0
+# for i in range(1, 101):
+#   run_test(poisson_gen(i, n))
+
+# for i in range(1, 101):
+#   print(chi_cuadrado_poisson(poisson_gen(i, n), 0.05, 10, i))
+
 for i in range(1, 101):
-  suma += kolmogorovSmirnovTest(poisson_gen(aLambda, m), aLambda)
-print(suma/100)
+  for j in np.arange(0.2, 1, 0.2):
+    run_test(pascal_gen(i, j, n))
+
+for i in range(1, 101):
+  for j in np.arange(0.2, 1, 0.2):
+    print(i, j)
+    print(chi_cuadrado_pascal(pascal_gen(i, j, n), i, j, 0.05))
 
 
-
-
+# k = 5
+# p = 0.5
+# m = 10000
+# histograma_pascal(pascal_gen(k, p, m), p, k)
+# histograma_pascal(pascal_gen(2, 0.75, m), 0.75, 2)
+# histograma_pascal(pascal_gen(5, 0.3, m), 0.3, 5)
+# histograma_pascal(pascal_gen(13, 0.5, m), 0.5, 13)
