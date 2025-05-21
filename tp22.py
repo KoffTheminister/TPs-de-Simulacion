@@ -3,11 +3,11 @@ import matplotlib.pyplot as plt
 import random
 import math
 from scipy.stats import chi2
-from scipy.stats import norm
+from scipy.stats import norm, poisson
 
 def gcl(seed, n):
   lista = []#lista = np.array([])
-  a = 1664525#2**16 + 3
+  a = 1664525
   m = 2**32
   ultimo = (a*seed)%m
   lista.append(ultimo/m) #lista = np.append(lista, ultimo/m)
@@ -28,11 +28,13 @@ def normal_gen1(media, ds, k, n): #basico
   return nuevaLista
 
 def normal_gen2(media, ds, k, n): #directo
-  lista = gcl(123654, k*n)
+  lista = gcl(1236 + random.randint(1, 10000), k*n)#lista = gcl(123654, k*n)
   nuevaLista = []
   for i in range(1, n, 2):
     nuevaLista.append(np.sqrt(-2*math.log(lista[i]))*math.cos(2*math.pi*lista[i+1]))
     nuevaLista.append(np.sqrt(-2*math.log(lista[i]))*math.sin(2*math.pi*lista[i+1]))
+  nuevaLista = np.array(nuevaLista)
+  nuevaLista = nuevaLista*ds + media
   return nuevaLista
 
 def poisson_gen(myLambda, m):
@@ -132,8 +134,12 @@ def chi_cuadrado(data, k, alpha):
 def calculateAreaUnderUni(x_min, x_max, x):
   return (1 / (x_max - x_min)) * (x - x_min)
 
+def calculateAreaUnderNormal(m, ds, x):
+    return norm.cdf(x, loc=m, scale=ds)
+
 def calculateAreaUnderPoi(x, myLambda):
   expo = math.exp(-myLambda)
+  suma = 0
   for i in range(x + 1):
     suma += (myLambda**i)/math.factorial(i)
   return expo*suma
@@ -143,51 +149,32 @@ def calculateAreaUnderPas(k, p, x):
     suma += math.comb(k + i - 1, i)*(p**k)*((1 - p)**i)
   return suma
 
-def kolmogorovSmirnovTest(samples, n_divs):
+#def kolmogorovSmirnovTest(samples, m, ds):
+def kolmogorovSmirnovTest(samples, myLambda):
   samples = np.sort(samples)
-  histo = np.zeros(n_divs)
-  x_min = min(samples)
-  x_max = max(samples)
-  divSize = (x_max - x_min) / n_divs
-  for s in samples:
-    index = int((s - x_min) / divSize)
-    if index >= n_divs:
-      index = n_divs - 1
-    histo[index] += 1
-
-  total = len(samples)
-  emp_cdf = np.cumsum(histo) / total
-
-  maxDiff = 0
-  for j in range(n_divs):
-      x_val = x_min + (j + 1) * divSize 
-      theor_cdf = calculateAreaUnderUni(x_min, x_max, x_val)
-      diff = abs(emp_cdf[j] - theor_cdf)
-      if diff > maxDiff:
-          maxDiff = diff
-  return maxDiff
-
-def andersonDarlingTest(samples):
-  import math
-  samples = np.sort(samples)
-  x_min = min(samples)
-  x_max = max(samples)
   n = len(samples)
+  emp_cdf = np.arange(1, n+1) / n
+  #theor_cdf = norm.cdf(samples, loc=m, scale=ds)
+  theor_cdf = []
+  for x in samples:
+    theor_cdf.append(calculateAreaUnderPoi(x, myLambda))
+  theor_cdf = np.array(theor_cdf)
+  max_diff = np.max(np.abs(emp_cdf - theor_cdf))
+  return max_diff
+
+def andersonDarlingTest(samples, m, ds):
+  samples = np.sort(samples)
+  n = len(samples)
+  epsilon = 1e-10  # to avoid log(0)
+
   aSquared_sum = 0
-  epsilon = 1e-10
+  for i in range(n):
+    Fi = norm.cdf(samples[i], loc=m, scale=ds)
+    Fi = min(max(Fi, epsilon), 1 - epsilon)  # Clamp Fi to avoid log(0)
+    aSquared_sum += (2 * i + 1) * (math.log(Fi) + math.log(1 - norm.cdf(samples[n - i - 1], loc=m, scale=ds)))
 
-  for s in range(n):
-    F_i = calculateAreaUnderUni(x_min, x_max, samples[s])
-    F_n_i = calculateAreaUnderUni(x_min, x_max, samples[n - s - 1])
-
-    F_i = max(F_i, epsilon)
-    F_n_i = min(F_n_i, 1 - epsilon)
-
-    term = (2 * s + 1) * (math.log(F_i) + math.log(1 - F_n_i))
-    aSquared_sum += term
-
-  aSquared = -n - (aSquared_sum / n)
-  return aSquared
+  A2 = -n - (aSquared_sum / n)
+  return A2
 
 def secDeSeries(xs):
   plt.figure(figsize=(10, 4))
@@ -199,10 +186,9 @@ def secDeSeries(xs):
   plt.tight_layout()
   plt.show()
 
-def histograma(xs):
+def histograma_normal(xs, realM, realDs):
     mini = min(xs)
     maxi = max(xs)
-
     bins = np.linspace(mini, maxi, 101)
 
     counts, bin_edges = np.histogram(xs, bins=bins)
@@ -210,17 +196,49 @@ def histograma(xs):
 
     bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
 
-    media = 0
-    desviacion = 1
-    # x = np.linspace(media - 4*desviacion, media + 4*desviacion, 1000)
-    # y = norm.pdf(x, media, desviacion)
-
+    media = np.mean(xs)
+    desviacion = np.std(xs)
+    x = np.linspace(media - 4*desviacion, media + 4*desviacion, 1000)
+    y = norm.pdf(x, media, desviacion)
+    y *= (bin_edges[1] - bin_edges[0]) #
     plt.figure(figsize=(10, 4))
-    #plt.plot(x, y, label=f'N({media}, {desviacion}²)', color='blue')
+    plt.plot(x, y, label=f'N({media}, {desviacion}²), funcion de densidad resultante', color='blue')
+
+    xr = np.linspace(realM - 4*realDs, realM + 4*realDs, 1000)
+    yr = norm.pdf(xr, realM, realDs)
+    yr *= (bin_edges[1] - bin_edges[0]) #
+    plt.plot(xr, yr, label=f'N({realM}, {realDs}²), verdadera distribucion', color='green')
+
     plt.bar(bin_centers, relative_freq, width=bin_edges[1]-bin_edges[0],
-            color='cornflowerblue', edgecolor='black', alpha=0.7, label='Datos')
+             color='cornflowerblue', edgecolor='black', alpha=0.7)
     
     plt.title("Histograma de Frecuencia Relativa vs Distribución Normal")
+    plt.xlabel("Valor")
+    plt.ylabel("Frecuencia relativa")
+    plt.legend()
+    plt.grid(axis='y', linestyle='--', alpha=0.7)
+    plt.tight_layout()
+    plt.show()
+
+def histograma_poisson(xs, realLambda):
+    mini = min(xs)
+    maxi = max(xs)
+    bins = np.linspace(mini, maxi, 101)
+
+    counts, bin_edges = np.histogram(xs, bins=bins)
+    relative_freq = counts / len(xs)
+
+    bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
+
+    x_vals = np.arange(mini, maxi + 1)
+    pmf_vals = poisson.pmf(x_vals, mu=realLambda)
+    plt.plot(x_vals, pmf_vals, 'o-', color='green', linewidth=2,
+             label=f'Distribución Poisson (λ={realLambda})')
+
+    plt.bar(bin_centers, relative_freq, width=bin_edges[1]-bin_edges[0],
+             color='cornflowerblue', edgecolor='black', alpha=0.7)
+    
+    plt.title("Histograma de Frecuencia Relativa vs Distribución Poisson")
     plt.xlabel("Valor")
     plt.ylabel("Frecuencia relativa")
     plt.legend()
@@ -243,4 +261,31 @@ def lagPlot(xs):
   plt.tight_layout()
   plt.show()
 
-histograma(pascal_gen(5, 0.2, 10000))
+media = 0
+ds = 0.1
+k = 40
+n = 10000
+#histograma_normal(normal_gen1(media, ds, k, n), media, ds)
+#histograma_normal(normal_gen2(media, ds, k, n), media, ds)
+
+# suma = 0
+# for i in range(1, 101):
+#   suma += kolmogorovSmirnovTest(normal_gen2(media, i, k, n), media, i)
+# print(suma/100)
+
+# suma = 0
+# for i in range(1, 101):
+#   suma += andersonDarlingTest(normal_gen2(media, i, k, n), media, i)
+# print(suma/100)
+
+aLambda = 1
+m = 10000
+#histograma_poisson(poisson_gen(aLambda, m), aLambda)
+suma = 0
+for i in range(1, 101):
+  suma += kolmogorovSmirnovTest(poisson_gen(aLambda, m), aLambda)
+print(suma/100)
+
+
+
+
