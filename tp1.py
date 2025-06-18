@@ -17,7 +17,7 @@ def corrida_parametrizada(numEl, tirs, corrs):
       contv = 0
       for j in range(n + 1):
         num = random.randint(0, 36)
-        if(num == (numEl - 1)):
+        if(num == (numEl)):# - 1)):
           contFrec += 1
         contProm += num
         contv += num**2
@@ -76,7 +76,7 @@ def corrida_parametrizada(numEl, tirs, corrs):
   plt.tight_layout()
   plt.show()
 
-corrida_parametrizada(5,300,3)
+corrida_parametrizada(0,10,1)
 
 # def corrida_parametrizada_tirada_estatica(corrs, tirs, numEl):
 #   frecsRels = []

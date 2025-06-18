@@ -517,20 +517,20 @@ def f_exponencial(x, beta):
     return (1 / beta) * np.exp(-x / beta)
 
 def metodo_rechazo_exp(beta, n, b, seed=None):
-    if seed is not None:
-        np.random.seed(seed)
+  if seed is not None:
+    np.random.seed(seed)
 
-    muestras = []
-    g = 1 / b  # Uniforme en [0, b]
-    c = f_exponencial(0, beta) / g  # máximo de f(x) / g(x)
+  muestras = []
+  g = 1 / b  # Uniforme en [0, b]
+  c = f_exponencial(0, beta) / g  # máximo de f(x) / g(x)
 
-    while len(muestras) < n:
-        x = np.random.uniform(0, b)
-        u = np.random.uniform(0, 1)
-        if u <= f_exponencial(x, beta) / (c * g):
-            muestras.append(x)
+  while len(muestras) < n:
+    x = np.random.uniform(0, b)
+    u = np.random.uniform(0, 1)
+    if u <= f_exponencial(x, beta) / (c * g):
+      muestras.append(x)
 
-    return np.array(muestras)
+  return np.array(muestras)
 
 # Simulación
 beta = 2

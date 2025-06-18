@@ -4,17 +4,17 @@ import sys
 
 estrategias = ['m','d','f','o']
 
-if sys.argv[1]!="-c" or sys.argv[3]!="-n" or sys.argv[5]!="-s" or sys.argv[7]!="-a" or sys.argv[6] not in estrategias:
-    print(f"Uso: Python SimulacionRuleta.py -c <Cantidad de tiradas> -n <numero de corridas> -s <estrategia ({estrategias})> -a <capital a usar (infinito (i) - numero de capital)>")
-    sys.exit(1)
+# if sys.argv[1]!="-c" or sys.argv[3]!="-n" or sys.argv[5]!="-s" or sys.argv[7]!="-a" or sys.argv[6] not in estrategias:
+#     print(f"Uso: Python SimulacionRuleta.py -c <Cantidad de tiradas> -n <numero de corridas> -s <estrategia ({estrategias})> -a <capital a usar (infinito (i) - numero de capital)>")
+#     sys.exit(1)
 
-cantTiradas=int(sys.argv[4])
-cantCorridas=int(sys.argv[2])
-if(sys.argv[8] == 'i'):
-    capital = 'i'
-else:
-    capital = int(sys.argv[8])
-estrategia = sys.argv[6]
+# cantTiradas=int(sys.argv[4])
+# cantCorridas=int(sys.argv[2])
+# if(sys.argv[8] == 'i'):
+#     capital = 'i'
+# else:
+#     capital = int(sys.argv[8])
+# estrategia = sys.argv[6]
 
 negro = [2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35]
 
@@ -155,7 +155,7 @@ def nuevaEstrategia(tirs, capital):
     print(f"\El capital en la tirada numero {n} es de ${cap}")
     return historialCapital, resultados
 
-def simulacion_ruleta(corrs, tirs, cap, e):
+def simulacion_ruleta(corrs = 1, tirs = 10000, cap = 'i', e = 'f'):
     corridas = []
     exitosprop = []
     if(e == 'm'):
@@ -208,7 +208,7 @@ def simulacion_ruleta(corrs, tirs, cap, e):
     plt.show()
 
 
-simulacion_ruleta(cantCorridas, cantTiradas, capital, estrategia)
+simulacion_ruleta(corrs = 1, tirs = 10, cap = 'i', e = 'f')
 
 
 
